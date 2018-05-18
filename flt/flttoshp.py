@@ -1,4 +1,4 @@
-from flt import classify, flttotif, polygonize
+from flt import classify as classifier, flttotif, polygonize
 
 '''
 分级：
@@ -10,14 +10,31 @@ from flt import classify, flttotif, polygonize
 3.136204 5.612822 10
 '''
 
+def fltToShp(fltPath, fltToTifPath, classify, classifyTifPath, maskTifPath, outShpPath):
+    '''
+    将flt转为shp
+    :param fltPath:         flt路径
+    :param fltToTifPath:    转为tif后的路径
+    :param classify:      重分类标准
+    :param classifyTifPath: 分类后的tif路径
+    :param maskTifPath:     蒙版路径，根据flt转换的tif生成，作用：maskTifPath指示的tif图中，像素值为0的部分，不输出shp
+    :param outShpPath:      输出的shp路径
+    :return:
+    '''
+    flttotif.fltWithoutPrjToTiff(fltPath, fltToTifPath)
+    classifier.produceClassifyTif(fltToTifPath, classify, classifyTifPath)
+    classifier.produceMaskTif(fltToTifPath, maskTifPath)
+
+    polygonize.polygonize(classifyTifPath, maskTifPath, outShpPath)
+
 def fltWithoutPrjToShpTest(fltpath, shppath):
     fltToTifpath = '../testdata/out/flttotif.tif'
     classifyTifPath = '../testdata/out/classified.tif'
     maskTifPath = '../testdata/out/mask.tif'
 
     flttotif.fltWithoutPrjToTiff(fltpath, fltToTifpath)
-    classify.produceClassifyTif(fltToTifpath, classifyTifPath, None)
-    classify.produceMaskTif(fltToTifpath, maskTifPath)
+    classifier.produceClassifyTif(fltToTifpath, classifyTifPath, None)
+    classifier.produceMaskTif(fltToTifpath, maskTifPath)
 
     polygonize.polygonize(classifyTifPath, maskTifPath, shppath)
 
