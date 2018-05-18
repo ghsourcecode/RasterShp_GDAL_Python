@@ -10,7 +10,7 @@ from flt import classify, flttotif, polygonize
 3.136204 5.612822 10
 '''
 
-def fltWithoutPrjToShp(fltpath, shppath):
+def fltWithoutPrjToShpTest(fltpath, shppath):
     fltToTifpath = '../testdata/out/flttotif.tif'
     classifyTifPath = '../testdata/out/classified.tif'
     maskTifPath = '../testdata/out/mask.tif'
@@ -25,4 +25,4 @@ def fltWithoutPrjToShp(fltpath, shppath):
 if __name__ == '__main__':
     fltpath = '../testdata/rain_2016.flt'
     fltshppath = '../testdata/out/flttoshp.shp'
-    fltWithoutPrjToShp(fltpath, fltshppath)
+    fltWithoutPrjToShpTest(fltpath, fltshppath)
