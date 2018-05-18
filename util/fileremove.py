@@ -45,3 +45,5 @@ def removeFolder(folderPath):
 
 if __name__ == '__main__':
     currentPyParent = os.path.dirname(os.getcwd());
+    delFolder = currentPyParent + '/testdata/delfolder'
+    removeFolder(delFolder)

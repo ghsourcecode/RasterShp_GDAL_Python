@@ -9,10 +9,9 @@ import util.globalVariable as globalVar
 if __name__ == '__main__':
     root = os.path.dirname(os.getcwd())
     mergePyPath = root + '/gdal223/gdal_merge.py'
-    out = root + '/testdata/outmerge.tif'
-    r = root + '/testdata/outraster1.tif'
-    g = root + '/testdata/outraster2.tif'
-    b = root + '/testdata/outraster3.tif'
-    a = root + '/testdata/outraster1.tif'
-    os.system('python ' + mergePyPath + ' -separate -n 0 -a_nodata 0 -of GTiff -o ' + out + ' ' + r + ' ' + g + ' ' + b) #
-
+    out = root + '/testdata/temp/outmerge.tif'
+    r = root + '/testdata/temp/red.tif'
+    g = root + '/testdata/temp/green.tif'
+    b = root + '/testdata/temp/blue.tif'
+    a = root + '/testdata/red.tif'
+    os.system('python ' + mergePyPath + ' -separate -n 0 -a_nodata 0 -of GTiff -o ' + out + ' ' + r + ' ' + g + ' ' + b)

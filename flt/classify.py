@@ -30,17 +30,17 @@ def writeTiff(data, width, height, bands, geotransform, proj, noDataValue, outPa
         dataset.GetRasterBand(i + 1).WriteArray(data[i])
     del dataset
 
-def produceClassifyTif(srcTifPath, outClassifyTifPath, grade):
-    class_defs = [(0, 0, 0.013435),
-                  (1, 0.013435, 0.037422),
-                  (2, 0.037422, 0.080247),
-                  (3, 0.080247, 0.156709),
-                  (4, 0.156709, 0.293223),
-                  (5, 0.293223, 0.536956),
-                  (6, 0.536956, 0.972118),
-                  (7, 0.972118, 1.749056),
-                  (8, 1.749056, 3.136204),
-                  (9, 3.136204, 5.612822)]
+def produceClassifyTif(srcTifPath, classify, outClassifyTifPath):
+    # classify = [(0, 0, 0.013435),
+    #             (1, 0.013435, 0.037422),
+    #             (2, 0.037422, 0.080247),
+    #             (3, 0.080247, 0.156709),
+    #             (4, 0.156709, 0.293223),
+    #             (5, 0.293223, 0.536956),
+    #             (6, 0.536956, 0.972118),
+    #             (7, 0.972118, 1.749056),
+    #             (8, 1.749056, 3.136204),
+    #             (9, 3.136204, 5.612822)]
 
     dataset = gdal.Open(srcTifPath)
     width = dataset.RasterXSize
@@ -56,7 +56,7 @@ def produceClassifyTif(srcTifPath, outClassifyTifPath, grade):
 
     dst_image = numpy.zeros((height, width))
 
-    for class_info in class_defs:
+    for class_info in classify:
         class_id = class_info[0]
         class_start = class_info[1]
         class_end = class_info[2]

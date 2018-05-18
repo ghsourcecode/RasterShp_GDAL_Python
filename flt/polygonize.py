@@ -84,6 +84,10 @@ def polygonize(tifPath, maskPath, outShpPath):
         if not quiet_flag:
             print('Creating output %s of format %s.' % (dst_filename, format))
         dst_ds = drv.CreateDataSource(dst_filename)
+    else:
+        layerCount = dst_ds.GetLayerCount ()
+        for index in range(0, layerCount):
+            dst_ds.DeleteLayer(index)
 
     # =============================================================================
     #       Find or create destination layer.
@@ -108,11 +112,6 @@ def polygonize(tifPath, maskPath, outShpPath):
         fd = ogr.FieldDefn(dst_fieldname, ogr.OFTInteger)
         dst_layer.CreateField(fd)
         dst_field = 0
-    else:
-        if dst_fieldname is not None:
-            dst_field = dst_layer.GetLayerDefn().GetFieldIndex(dst_fieldname)
-            if dst_field < 0:
-                print("Warning: cannot find field '%s' in layer '%s'" % (dst_fieldname, dst_layername))
 
     # =============================================================================
     #	Invoke algorithm.
