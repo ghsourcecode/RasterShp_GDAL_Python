@@ -2,7 +2,9 @@ from osgeo import ogr
 from osgeo import gdal
 import math
 import os
-
+'''
+shp 转 tif，转出的tif图是灰度的
+'''
 def shpToRaster(shpPath, pixel, rasterPath):
     # set pixel size
     # pixelx = 0.00002
