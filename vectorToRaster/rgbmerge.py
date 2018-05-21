@@ -13,5 +13,5 @@ if __name__ == '__main__':
     r = root + '/testdata/temp/red.tif'
     g = root + '/testdata/temp/green.tif'
     b = root + '/testdata/temp/blue.tif'
-    a = root + '/testdata/red.tif'
-    os.system('python ' + mergePyPath + ' -separate -n 0 -a_nodata 0 -of GTiff -o ' + out + ' ' + r + ' ' + g + ' ' + b)
+    a = root + '/testdata/alpha.tif'
+    os.system('python ' + mergePyPath + ' -separate -n 0 -a_nodata 0 -of GTiff -o ' + out + ' ' + r + ' ' + g + ' ' + b + ' ' + a)

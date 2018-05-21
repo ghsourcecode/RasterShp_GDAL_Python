@@ -347,6 +347,147 @@ def rasterizeToRGB(shppath, pixel_size, colors, redrasterpath, greenrasterpath, 
 
     orig_data_source.Destroy()
 
+def rasterizeToRGBA(shppath, pixel_size, colors, redrasterpath, greenrasterpath, bluerasterpath, alpharasterpath):
+    # Open the data source
+    orig_data_source = ogr.Open(shppath)
+    # Make a copy of the layer's data source because we'll need to
+    # modify its attributes table
+    red_source_ds = ogr.GetDriverByName("Memory").CopyDataSource(orig_data_source, "")
+    green_source_ds = ogr.GetDriverByName("Memory").CopyDataSource(orig_data_source, "")
+    blue_source_ds = ogr.GetDriverByName("Memory").CopyDataSource(orig_data_source, "")
+    alpha_source_ds = ogr.GetDriverByName("Memory").CopyDataSource(orig_data_source, "")
+
+    red_source_layer = red_source_ds.GetLayer(0)
+    green_source_layer = green_source_ds.GetLayer(0)
+    blue_source_layer = blue_source_ds.GetLayer(0)
+    alpha_source_layer = alpha_source_ds.GetLayer(0)
+
+    source_srs = red_source_layer.GetSpatialRef()
+    x_min, x_max, y_min, y_max = red_source_layer.GetExtent()
+
+    # Create a field in the source layer to hold the features colors
+    field_def = ogr.FieldDefn(gridcodename, ogr.OFTReal)# rasterize gridcode(不同等级渲染不同颜色)
+    red_source_layer.CreateField(field_def)
+    green_source_layer.CreateField(field_def)
+    blue_source_layer.CreateField(field_def)
+    alpha_source_layer.CreateField(field_def)
+
+    source_layer_def = red_source_layer.GetLayerDefn()
+    field_index = source_layer_def.GetFieldIndex(gridcodename)
+    # Generate random values for the color field (it's here that the value
+    # of the attribute should be used, but you get the idea)
+    # red band
+    for feature in red_source_layer:
+        gridcode = feature.GetField(gridcodename)
+        redBand = int(colors[gridcode][0])
+        feature.SetField(field_index, redBand)
+        red_source_layer.SetFeature(feature)
+    # green band
+    for feature in green_source_layer:
+        gridcode = feature.GetField(gridcodename)
+        greenBand = int(colors[gridcode][1])
+        feature.SetField(field_index, greenBand)
+        green_source_layer.SetFeature(feature)
+    # blue band
+    for feature in blue_source_layer:
+        gridcode = feature.GetField(gridcodename)
+        blueBand = int(colors[gridcode][2])
+        feature.SetField(field_index, blueBand)
+        blue_source_layer.SetFeature(feature)
+
+    # alpha band
+    for feature in alpha_source_layer:
+        gridcode = feature.GetField(gridcodename)
+        alphaBand = int(colors[gridcode][3])
+        feature.SetField(field_index, alphaBand)
+        alpha_source_layer.SetFeature(feature)
+
+    # Create the destination data source
+    x_res = int((x_max - x_min) / pixel_size)
+    y_res = int((y_max - y_min) / pixel_size)
+    bands = 1
+    # red band target
+    red_target_ds = gdal.GetDriverByName('GTiff').Create(redrasterpath, x_res, y_res, bands, gdal.GDT_Byte)
+    red_target_ds.SetGeoTransform((
+            x_min, pixel_size, 0,
+            y_max, 0, -pixel_size,
+        ))
+    if source_srs:
+        # Make the target raster have the same projection as the source
+        red_target_ds.SetProjection(source_srs.ExportToWkt())
+    else:
+        # Source has no projection (needs GDAL >= 1.7.0 to work)
+        red_target_ds.SetProjection('LOCAL_CS["arbitrary"]')
+
+    err = gdal.RasterizeLayer(red_target_ds, [1],
+                              red_source_layer,
+                              burn_values=[0],
+                              options=["ATTRIBUTE=%s" % gridcodename])
+    if err != 0:
+        raise Exception("error rasterizing layer: %s" % err)
+
+    # green band target
+    green_target_ds = gdal.GetDriverByName('GTiff').Create(greenrasterpath, x_res, y_res, bands, gdal.GDT_Byte)
+    green_target_ds.SetGeoTransform((
+        x_min, pixel_size, 0,
+        y_max, 0, -pixel_size,
+    ))
+    if source_srs:
+        # Make the target raster have the same projection as the source
+        green_target_ds.SetProjection(source_srs.ExportToWkt())
+    else:
+        # Source has no projection (needs GDAL >= 1.7.0 to work)
+        green_target_ds.SetProjection('LOCAL_CS["arbitrary"]')
+
+    err = gdal.RasterizeLayer(green_target_ds, [1],
+                              green_source_layer,
+                              burn_values=[0],
+                              options=["ATTRIBUTE=%s" % gridcodename])
+    if err != 0:
+        raise Exception("error rasterizing layer: %s" % err)
+
+    # blue band target
+    blue_target_ds = gdal.GetDriverByName('GTiff').Create(bluerasterpath, x_res, y_res, bands, gdal.GDT_Byte)
+    blue_target_ds.SetGeoTransform((
+        x_min, pixel_size, 0,
+        y_max, 0, -pixel_size,
+    ))
+    if source_srs:
+        # Make the target raster have the same projection as the source
+        blue_target_ds.SetProjection(source_srs.ExportToWkt())
+    else:
+        # Source has no projection (needs GDAL >= 1.7.0 to work)
+        blue_target_ds.SetProjection('LOCAL_CS["arbitrary"]')
+
+    err = gdal.RasterizeLayer(blue_target_ds, [1],
+                              blue_source_layer,
+                              burn_values=[0],
+                              options=["ATTRIBUTE=%s" % gridcodename])
+    if err != 0:
+        raise Exception("error rasterizing layer: %s" % err)
+
+    # alpha band target
+    alpha_target_ds = gdal.GetDriverByName('GTiff').Create(alpharasterpath, x_res, y_res, bands, gdal.GDT_Byte)
+    alpha_target_ds.SetGeoTransform((
+        x_min, pixel_size, 0,
+        y_max, 0, -pixel_size,
+    ))
+    if source_srs:
+        # Make the target raster have the same projection as the source
+        alpha_target_ds.SetProjection(source_srs.ExportToWkt())
+    else:
+        # Source has no projection (needs GDAL >= 1.7.0 to work)
+        alpha_target_ds.SetProjection('LOCAL_CS["arbitrary"]')
+
+    err = gdal.RasterizeLayer(alpha_target_ds, [1],
+                              alpha_source_layer,
+                              burn_values=[0],
+                              options=["ATTRIBUTE=%s" % gridcodename])
+    if err != 0:
+        raise Exception("error rasterizing layer: %s" % err)
+
+    orig_data_source.Destroy()
+
 if __name__ == '__main__':
     root = os.path.dirname(os.getcwd());
     shpPath = root + '/testdata/flttoshp.shp'
@@ -354,4 +495,6 @@ if __name__ == '__main__':
     redrasterpath = root + '/testdata/temp/red.tif'
     greenrasterpath = root + '/testdata/temp/green.tif'
     bluerasterpath = root + '/testdata/temp/blue.tif'
-    rasterizeToRGB(shpPath, pixel, colors, redrasterpath, greenrasterpath, bluerasterpath)
+    alpharasterpath = root + '/testdata/temp/alpha.tif'
+    # rasterizeToRGB(shpPath, pixel, colors, redrasterpath, greenrasterpath, bluerasterpath)
+    rasterizeToRGBA(shpPath, pixel, colors, redrasterpath, greenrasterpath, bluerasterpath, alpharasterpath)

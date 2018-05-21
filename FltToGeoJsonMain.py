@@ -10,9 +10,9 @@ import sys
 import numpy
 import ast
 try:
-    from osgeo import gdal, ogr, osr
+    from osgeo import gdal
 except ImportError:
-    import gdal, ogr, osr
+    import gdal
 import flt.flttoshp as flttoshp
 import flt.shpToGeoJson as shpToGeoJson
 
@@ -42,8 +42,8 @@ def fltToGeoJson(fltpath, classify, outGeoJsonPath):
 
 if __name__ == '__main__':
     gdal.AllRegister()
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
-    if argv is None:
+    argvs = gdal.GeneralCmdLineProcessor(sys.argv)
+    if argvs is None:
         sys.exit(0)
 
     # test instance
@@ -53,15 +53,15 @@ if __name__ == '__main__':
     # outGeoJsonPath = root + '/testdata/out/shpToJson.json'
     # main(fltpath, classify, outGeoJsonPath)
 
-    print('argv 0: ' + argv[0])
-    print('argv 1: ' + argv[1].split('=')[1])
-    print('argv 2: ' + argv[2].split('=')[1])
-    print('argv 3: ' + argv[3].split('=')[1])
+    print('argv 0: ' + argvs[0])
+    print('argv 1: ' + argvs[1].split('=')[1])
+    print('argv 2: ' + argvs[2].split('=')[1])
+    print('argv 3: ' + argvs[3].split('=')[1])
 
-    fltpath = argv[1].split('=')[1]
-    classifyString = argv[2].split('=')[1]
+    fltpath = argvs[1].split('=')[1]
+    classifyString = argvs[2].split('=')[1]
     classifyList = ast.literal_eval(classifyString)
     classify = numpy.array(classifyList)
-    outGeoJsonPath = argv[3].split('=')[1]
+    outGeoJsonPath = argvs[3].split('=')[1]
     fltToGeoJson(fltpath, classify, outGeoJsonPath)
 
