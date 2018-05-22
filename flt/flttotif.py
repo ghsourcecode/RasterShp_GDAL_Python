@@ -1,18 +1,18 @@
 import gdal, osr
 
 
-def raster2array(rasterfn):
-    raster = gdal.Open(rasterfn)
+def raster2array(rasterfilename):
+    raster = gdal.Open(rasterfilename)
     band = raster.GetRasterBand(1)
     return band.ReadAsArray()
 
-def getNoDataValue(rasterfn):
-    raster = gdal.Open(rasterfn)
+def getNoDataValue(rasterfilename):
+    raster = gdal.Open(rasterfilename)
     band = raster.GetRasterBand(1)
     return band.GetNoDataValue()
 
-def array2raster(rasterfn,newRasterfn,array):
-    raster = gdal.Open(rasterfn)
+def array2raster(rasterfilename, newRasterfilename, array):
+    raster = gdal.Open(rasterfilename)
     geotransform = raster.GetGeoTransform()
     originX = geotransform[0]
     originY = geotransform[3]
@@ -22,7 +22,7 @@ def array2raster(rasterfn,newRasterfn,array):
     rows = raster.RasterYSize
 
     driver = gdal.GetDriverByName('GTiff')
-    outRaster = driver.Create(newRasterfn, cols, rows, 1, gdal.GDT_Float32)
+    outRaster = driver.Create(newRasterfilename, cols, rows, 1, gdal.GDT_Float32)
     outRaster.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
     outband = outRaster.GetRasterBand(1)
     outband.WriteArray(array)
