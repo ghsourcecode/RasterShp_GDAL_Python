@@ -143,22 +143,28 @@ def writeVectorFile():
     #从layer中读取相应的feature类型，并创建feature
     oDefn = oLayer.GetLayerDefn()
 
-    # 创建三角形要素
-    oFeatureTriangle = ogr.Feature(oDefn)
-    oFeatureTriangle.SetField(0, 0)
-    oFeatureTriangle.SetField(1, "三角形")
+    # # 创建三角形要素
+    # oFeatureTriangle = ogr.Feature(oDefn)
+    # oFeatureTriangle.SetField(0, 0)
+    # oFeatureTriangle.SetField(1, "三角形")
+    # geomTriangle = ogr.CreateGeometryFromWkt("POLYGON ((0 0,20 0,10 15,0 0))")
+    # oFeatureTriangle.SetGeometry(geomTriangle)
+    # oLayer.CreateFeature(oFeatureTriangle)
+    #
+    # # 创建矩形要素
+    # oFeatureRectangle = ogr.Feature(oDefn)
+    # oFeatureRectangle.SetField(0, 1)
+    # oFeatureRectangle.SetField(1, "矩形")
+    # geomRectangle = ogr.CreateGeometryFromWkt("POLYGON ((30 0,60 0,60 30,30 30,30 0))")
+    # oFeatureRectangle.SetGeometry(geomRectangle)
+    # oLayer.CreateFeature(oFeatureRectangle)
+
+    oFeaturePentagon = ogr.Feature(oDefn)
+    oFeaturePentagon.SetField(0, 0)
+    oFeaturePentagon.SetField(1, "三角形")
     geomTriangle = ogr.CreateGeometryFromWkt("POLYGON ((0 0,20 0,10 15,0 0))")
-    oFeatureTriangle.SetGeometry(geomTriangle)
-    oLayer.CreateFeature(oFeatureTriangle)
-
-    # 创建矩形要素
-    oFeatureRectangle = ogr.Feature(oDefn)
-    oFeatureRectangle.SetField(0, 1)
-    oFeatureRectangle.SetField(1, "矩形")
-    geomRectangle = ogr.CreateGeometryFromWkt("POLYGON ((30 0,60 0,60 30,30 30,30 0))")
-    oFeatureRectangle.SetGeometry(geomRectangle)
-    oLayer.CreateFeature(oFeatureRectangle)
-
+    oFeaturePentagon.SetGeometry(geomTriangle)
+    oLayer.CreateFeature(oFeaturePentagon)
     # 创建五角形要素
     oFeaturePentagon = ogr.Feature(oDefn)
     oFeaturePentagon.SetField(0, 2)
