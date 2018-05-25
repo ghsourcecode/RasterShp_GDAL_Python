@@ -9,7 +9,13 @@
 import os
 import shutil
 
-
+def existsFile(filePath):
+    '''
+    判断文件或文件夹是否存在
+    :param filePath:
+    :return:
+    '''
+    return os.path.exists(filePath)
 
 def removeFile(filePath):
     '''
