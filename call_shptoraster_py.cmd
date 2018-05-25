@@ -1,0 +1,2 @@
+python E:\PycharmProject\gdalpython2\ShpToRasterMain.py shpPath=E:\PycharmProject\gdalpython2\testdata\flttoshp.shp resolution=0.01 colors=[(255,255,128,1),(229,252,114,1),(205,250,100,1),(179,245,86,1),(155,242,73,1),(129,237,57,1),(102,232,42,1),(75,227,25,1),(57,222,24,1),(62,209,54,1),(62,199,75,1),(60,189,95,1),(59,179,113,1),(54,168,130,1),(44,158,147,1),(31,150,166,1),(30,134,166,1),(32,116,161,1),(34,95,153,1),(33,79,148,1),(31,62,140,1),(27,46,133,1),(20,31,128,1),(12,16,120,1)] rasterPath=E:\PycharmProject\gdalpython2\testdata\out\outraster.tif
+@pause
