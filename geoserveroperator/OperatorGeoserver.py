@@ -9,7 +9,7 @@
 import os
 import sys
 import requests
-# import Catalog from geoserver
+
 
 '''
 requests库对rest的操作，主要用get、put、post、delete，为了和rest服务命名规则一致，以下函数的命名也以这几个关键字开头
@@ -107,7 +107,7 @@ def putDataStoreInWorkspace(workspaceName, dataStoreName, newShpPath):
     print('更新workspace中的datastore')
     url = geoserverRestUrl + '/workspaces/' + workspaceName + '/datastores/' + dataStoreName
     headers = {'content-type':'application/xml'}
-    newDataStoreBody = '<dataStore><name>'+ dataStoreName +'</name><connectionParameters><url>file://' + newShpPath \
+    newDataStoreBody = '<dataStore><name>'+ dataStoreName +'</name><enabled>true</enabled><connectionParameters><url>file://' + newShpPath \
                     + '</url><filetype>shapefile</filetype></connectionParameters></dataStore>'
     response = requests.put(url, auth=auth, data=newDataStoreBody, headers=headers)
     print('resp code: ' + str(response.status_code))
@@ -128,7 +128,7 @@ def getWMS():
     :return:
     '''
     print('获取geoserver上发布的wms的能力')
-    url = geoserverRestUrl[:geoserverRestUrl.rfind('/')] + '/wms?service=wms&version=1.0.0&request=GetCapabilities'
+    url = geoserverRestUrl[:geoserverRestUrl.rfind('/')] + '/services/wms/workspaces/?service=wms&version=1.1.1&request=GetCapabilities'
     headers = {'Accept': 'application/xml'}
     response = requests.get(url, auth=auth, headers=headers)
     file = open('resp_wms.xml', 'wb')
@@ -136,23 +136,50 @@ def getWMS():
     file.close()
     print('response code: ' + str(response.status_code))
 
+def getStyles():
+    print('获取geoserver服务器上的styles')
+    url = geoserverRestUrl + '/styles'
+    headers = {'Accept': 'application/xml'}
+    response = requests.get(url, auth=auth, headers=headers)
+    file = open('resp_styles.xml', 'wb')
+    file.write(response.content)
+    file.close()
+    print('response code: ' + response.status_code)
+
+def postStyle(styleFilePath):
+    print('上传一个style')
+
+    file = open(styleFilePath, 'r')
+    content = file.read()
+
+    url = geoserverRestUrl + '/styles'
+    # application/xml,application/json,application/vnd.ogc.sld+xml
+    headers = {'Content-type': 'application/vnd.ogc.sld+xml'}
+    response = requests.post(url, auth=auth, data=content, headers=headers)
+    print('response code: ' + str(response.status_code))
+
+
+
 
 
 if __name__ == '__main__':
     # getWorkspaces()
-    workspaceName = 'acme'
-    datastoreName = 'china_county_1'
+    workspaceName = 'acme2'
+    datastoreName = 'china_county_2'
     shpPath = 'E:/Data/geowebcachedata/county.shp'
     newShpPath = 'E:/Data/geowebcachedata/jiangxi_river2.shp'
     recure = True           #标识是否删除有内容的workspace
     # getWorkspaces(workspacename)
-    # postWorkspaces(workspaceName)
+    postWorkspaces(workspaceName)
     # deleteWorkspaces(workspaceName, recure)
 
     # getDataStoreFromWorkspace(workspaceName)
     # getDataStoreFromWorkspace(workspaceName, datastoreName)
-    # postDataStoreToWorkspace(workspaceName, datastoreName, shpPath)
+    postDataStoreToWorkspace(workspaceName, datastoreName, shpPath)
     # deleteDataStoreFromWorkspace(workspaceName, datastoreName, True)
-    # putDataStoreInWorkspace(workspaceName, datastoreName, shpPath)
+    putDataStoreInWorkspace(workspaceName, datastoreName, shpPath)
 
-    getWMS()
+    styleFilePath = 'style_example.xml'
+    # getWMS()
+    # getStyles()
+    # postStyle(styleFilePath)
