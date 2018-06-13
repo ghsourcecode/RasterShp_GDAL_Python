@@ -6,7 +6,7 @@
 @date: 2018/6/7 17:59
 '''
 
-from geoserver.catalog import Catalog
+from geoserver.catalog import Catalog, FailedRequestError
 import geoserver.util as geoUtil
 cat = Catalog('http://localhost:8090/geoserver/rest', username="admin", password="geoserver")
 
@@ -21,8 +21,29 @@ def getPostWorkspaceDataStore():
     print('datastore success')
     print('workspace success')
 
+def createWorkspace(workspaceName, workspaceUri):
+    print('创建workspace')
+    workspace = cat.create_workspace(workspaceName, workspaceUri)
+    if workspace is None:
+        print('创建workspace失败')
+    else:
+        print('创建workspace成功')
+
+def deleteWorkspace(workspaceName):
+    print('删除workspace')
+    workspace = cat.get_workspace(workspaceName)
+    try:
+        cat.delete(workspace, purge=None, recurse=True) #recurse 标识是否删除包含内容的对象
+    except FailedRequestError as e:
+        print(e)
+    except Exception as e:
+        print(e)
+
 def publishShpLayerFromFeatureStore(workspaceName, workspaceUri, featureStoreName, layerName, shpPath,
-                                    over_write=False, native_crs='EPSG:4326', srs='EPSG:4326'):
+                                    native_crs='EPSG:4326', srs='EPSG:4326'):
+    '''
+    该方法在2018-6-12测试后，出现无法发布featuretype的问题，暂时不知道原因，所以用下面的方法替换
+    '''
     print('创建featurestore并发布layer')
     workspace = cat.get_workspace(workspaceName)
     if workspace is None:
@@ -32,12 +53,12 @@ def publishShpLayerFromFeatureStore(workspaceName, workspaceUri, featureStoreNam
     if featureStore is None:
         cat.create_featurestore(featureStoreName, shapefile_plus_sidecars, workspace)
         featureStore = cat.get_store(featureStoreName, workspace)
-    publishedLayer = cat.publish_featuretype(layerName, featureStore, over_write, native_crs, srs)
+    publishedLayer = cat.publish_featuretype(layerName, featureStore, native_crs, srs)
     print('success')
     return publishedLayer
 
 def publishShpLayerFromDataStore(workspaceName, workspaceUri, dataStoreName, layerName, shpPath,
-                                 over_write=False, native_crs='EPSG:4326', srs='EPSG:4326'):
+                                 native_crs='EPSG:4326', srs='EPSG:4326'):
     print('创建datastore，上传shp到datastore中，并发布layer')
     workspace = cat.get_workspace(workspaceName)
     if workspace is None:
@@ -47,7 +68,7 @@ def publishShpLayerFromDataStore(workspaceName, workspaceUri, dataStoreName, lay
     if dataStore is None:
         dataStore = cat.create_datastore(dataStoreName, workspaceName)
     cat.add_data_to_store(dataStore, layerName, shapefile_plus_sidecars, workspaceName)
-    publishedLayer = cat.publish_featuretype(layerName, dataStore, over_write, native_crs, srs)
+    publishedFeatureType = cat.publish_featuretype(layerName, dataStore, native_crs, srs)
     print('publish success')
 
 def publishLayerFromPostGIS():
@@ -61,11 +82,71 @@ def modifyDataStore(workspaceName, dataStoreName):
     # now it is disabled
     cat.save(dataStore)
 
+def deleteDataStoreFromWorkspace(dataStoreName, wrokspaceName):
+    print('从worrkspace中删除datastore')
+    datastore = cat.get_store(dataStoreName, wrokspaceName)
+    try:
+        cat.delete(datastore, purge=None, recurse=True) #recurse 标识是否删除包含内容的对象
+    except Exception as e:
+        print(e)
+
+def createLayerGroup(layerGropuName, layers, styles, workspace):
+    print('创建layer group')
+    try:
+        cat.create_layergroup(layerGropuName, layers, workspace = workspace)
+    except Exception as e:
+        print(e)
+
+def deleteLayerGroup(layerGroupName, workspaceName):
+    print('删除layer group')
+    layerGroup = cat.get_layergroup(layerGroupName, workspaceName)
+    cat.delete(layerGroup, purge=None, recurse=True)
+    print('delete success')
+
+
+def testCreateLayerGroup():
+    print('测试创建layergroup')
+    workspaceName = 'bc51'
+    workspaceUri = 'www.decom.cn/' + workspaceName
+    datastoreName = 'dd51'
+    createWorkspace(workspaceName, workspaceUri)
+
+    layerName = 'prov_region'
+    shpPath = 'E:/Data/geowebcachedata/publish/prov_region'
+    layerName2 = 'river2'
+    shpPath2 = 'E:/Data/geowebcachedata/publish/river2'
+    layerNameList = [layerName, layerName2]
+    publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName, shpPath)
+    publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName2, shpPath2)
+
+    provStyleName = 'prov_style'
+    polygonSldPath = 'mytest_province_sld.xml'
+    createStyleFromSldFile(provStyleName, polygonSldPath)
+    riverStyleName = 'river2_style'
+    lineSldPath = 'mytest_line_sld.xml'
+    createStyleFromSldFile(riverStyleName, lineSldPath)
+    styleList = [provStyleName, riverStyleName]
+    styleNameList = [provStyleName, riverStyleName]
+
+    # 测试创建 layergroup
+    layerGroupName = 'testLayerGroup2'
+    layerGroup = cat.create_layergroup(layerGroupName)
+    layerGroup.layers = layerNameList
+    layerGroup.styles = styleNameList
+    layerGroup.workspace = workspaceName
+    layerGroup.bounds = [str(73.441277), str(135.086930), str(18.159829), str(53.561771), 'EPSG:4326']  # minx, maxx, miny, maxy, crs = box
+    cat.save(layerGroup)
+
 def createStyleFromSldFile(styleName, sldFilePath):
     print('从sld文件创建style')
     sldFile = open(sldFilePath)
     str = sldFile.read().encode('utf-8')
-    createdStyle = cat.create_style(styleName, str, overwrite=True)
+    style = cat.get_style(styleName)
+    if style is not None:
+        cat.create_style(styleName, str, overwrite=True)
+    else:
+        cat.create_style(styleName, str)
+
     print('style publish success')
 
 def setLayerStyle(layer, styleName):
@@ -83,19 +164,52 @@ def deleteStyle(styleName):
 if __name__ == '__main__':
     # getPostWorkspaceDataStore()
 
-    workspaceName = 'acme31'
+    workspaceName = 'layerGroupWorkspace'
     workspaceUri = 'www.decom.cn/' + workspaceName
-    datastoreName = 'ds31'
-    layerName = 'p_layer31'
+    datastoreName = 'layerGropuDataStore'
+    layerName = 'prov_region'
     shpPath = 'E:/Data/geowebcachedata/publish/prov_region'
-    # publishShpLayerFromFeatureStore()
-    # publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName, shpPath)
+    layerName2 = 'river2'
+    shpPath2 = 'E:/Data/geowebcachedata/publish/river2'
+    # createWorkspace(workspaceName, workspaceUri)
+    # deleteWorkspace(workspaceName)
+    # publishShpLayerFromFeatureStore(workspaceName, workspaceUri, datastoreName, layerName, shpPath)
 
-    styleName = 'test_style'
-    sldFilePath = 'mytest_province_sld.xml'
-    createStyleFromSldFile(styleName, sldFilePath)
 
-    layer = cat.get_layer(layerName)
+    # testGroup = cat.get_layergroup('testgroup', workspaceName)
+
+    publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName, shpPath)
+    publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName2, shpPath2)
+    layer1 = cat.get_layer(layerName)
+    layer2 = cat.get_layer(layerName2)
+    layerList = [layer1, layer2]
+    layerNameList = [layerName, layerName2]
+
+    provStyleName = 'prov_style'
+    polygonSldPath = 'mytest_province_sld.xml'
+    createStyleFromSldFile(provStyleName, polygonSldPath)
+    riverStyleName = 'river2_style'
+    lineSldPath = 'mytest_line_sld.xml'
+    createStyleFromSldFile(riverStyleName, lineSldPath)
+    style1 = cat.get_style(provStyleName)
+    style2 = cat.get_style(riverStyleName)
+    styleList = [provStyleName, riverStyleName]
+    styleNameList = [provStyleName, riverStyleName]
+
+    # 测试创建 layergroup
+    layerGroupName = 'testLayerGroup2'
+    lg = cat.create_layergroup(layerGroupName)
+    lg.layers = layerNameList
+    lg.styles = styleNameList
+    lg.workspace = workspaceName
+    lg.bounds = [str(73.441277), str(135.086930), str(18.159829), str(53.561771), 'EPSG:4326'] # minx, maxx, miny, maxy, crs = box
+    cat.save(lg)
+
+    # deleteLayerGroup(layerGroupName, workspaceName)
+
+    # deleteDataStoreFromWorkspace(datastoreName, workspaceName)
+
+    # layer = cat.get_stylelayer(layerName)
     # setLayerStyle(layer, styleName)
 
-    deleteStyle(styleName)
+    # deleteStyle(styleName)
