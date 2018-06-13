@@ -8,6 +8,7 @@
 
 import os
 import sys
+import json
 import requests
 
 
@@ -87,7 +88,7 @@ def getDataStoreFromWorkspace(workspaceName, datastoreName):
 
 def postDataStoreToWorkspace(workspaceName, dataStoreName, shpPath):
     '''
-    此方法没有接收要上传到datastore中的数据类似进行区分，此处只能上传shp
+    此方法没有接收要上传到datastore中的数据，此处只能上传shp
     :param workspaceName:
     :param dataStoreName:
     :return:
@@ -148,38 +149,137 @@ def getStyles():
 
 def postStyle(styleFilePath):
     print('上传一个style')
-
     file = open(styleFilePath, 'r')
     content = file.read()
-
     url = geoserverRestUrl + '/styles'
     # application/xml,application/json,application/vnd.ogc.sld+xml
     headers = {'Content-type': 'application/vnd.ogc.sld+xml'}
     response = requests.post(url, auth=auth, data=content, headers=headers)
     print('response code: ' + str(response.status_code))
 
+def seedLayer():
+    '''
+    json格式：
+    seedRequest:{
+      "name": "string",
+      "bounds": {
+        "coords": {}
+      },
+      "gridSetId": "string",
+      "zoomStart": 0,
+      "zoomStop": 0,
+      "type": "seed",
+      "threadCount": 0,
+      "parameters": {
+        "entry": {
+          "string": "string"
+        }
+      }
+    }
+    :return:
+    '''
+    print('缓存瓦片')
+    # http://localhost:8090/geoserver/gwc/rest/seed/{layer}.{format}, format的取值为json或xml
+    url = 'http://localhost:8090/geoserver/gwc/rest/seed/acme4:testLayerGroup2.json'
+    headers = {'Content-type': 'application/json'}
+    data = {
+        'seedRequest':{
+            'name': 'sedreq',
+            'gridSetId': 'EPSG:4326',
+            'format':'image/jpeg',
+            'zoomStart': 0,
+            'zoomStop': 5,
+            'type': 'seed',     #可取值为：seed (add tiles), reseed (replace tiles), or truncate (remove tiles).
+            'threadCount': 5
+        }
+    }
+    jsonData = json.dumps(data)
+    response = requests.post(url, auth=auth, data=jsonData, headers=headers)
+
+    headersxml = {'Content-type': 'application/xml'}
+    dataxml = '<seedRequest><name>seedreq</name><gridSetId>EPSG:4326</gridSetId><zoomStart>0</zoomStart><zoomStop>5</zoomStop><type>seed</type><threadCount>5</threadCount></seedRequest>'
+    # response = requests.post(url, auth=auth, data=dataxml, headers=headersxml)
+    # print('resp code: ' + str(response.status_code))
+
+def createGeoWebCacheLayer():
+    print('创建geowebcache layer')
+    url = 'http://localhost:8090/geoserver/gwc/rest/layers/acme4:testLayerGroup2.json'
+    headers = {'Content-type': 'application/json'}
+    data = {
+        "GeoServerLayer":{
+            "id": "createcachelayer",
+            "enabled": "false",
+            "inMemoryCached": "true",
+            "name": "createcachelayerName",
+            "mimeFormats": [
+                "image/png"
+            ],
+            "gridSubsets": {
+                "gridSubset": {
+                    "gridSetName": "EPSG:4326",
+                    "extent": {
+                        "bounds": 0
+                    },
+                    "zoomStart": 0,
+                    "zoomStop": 5
+                }
+            }
+        }
+    }
+    jsonData = json.dumps(data)
+    response = requests.put(url, auth=auth, data=jsonData, headers=headers)
+
+    xmlData = '<?xml version="1.0" encoding="UTF-8"?>'\
+        '<layer>' \
+              '<id>createlayer</id>' \
+              '<enabled>true</enabled>' \
+              '<inMemoryCached>true</inMemoryCached>' \
+              '<name>createlayer</name>' \
+              '<mimeFormats>image/png</mimeFormats>' \
+              '<gridSubsets><gridSubset>' \
+              '<gridSetName>EPSG:4326</gridSetName>' \
+              '<zoomStart>0</zoomStart>' \
+              '<zoomStop>5</zoomStop>' \
+              '</gridSubset>' \
+              '</gridSubsets>' \
+              '</layer>'
+    # response = requests.put(url, auth=auth, data=xmlData, headers=headers)
 
 
+    print('resp code: ' + str(response.status_code))
 
+def getGeoWebCacheLayers():
+    print('获取geowebcache layers')
+    url = 'http://localhost:8090/geoserver/gwc/rest/layers'
+    headers = {'Accept': 'text/html,application/xhtml+xml,application/xml,*/*;'}
+    response = requests.get(url, auth=auth, headers=headers)
+    file = open('geowebcachelayer.xml', 'wb')
+    file.write(response.content)
+    file.close()
+    print('resp code: ' + str(response.status_code))
 
 if __name__ == '__main__':
     # getWorkspaces()
-    workspaceName = 'acme2'
-    datastoreName = 'china_county_2'
+    workspaceName = 'acme5'
+    datastoreName = 'china_county_5'
     shpPath = 'E:/Data/geowebcachedata/county.shp'
     newShpPath = 'E:/Data/geowebcachedata/jiangxi_river2.shp'
     recure = True           #标识是否删除有内容的workspace
     # getWorkspaces(workspacename)
-    postWorkspaces(workspaceName)
+    # postWorkspaces(workspaceName)
     # deleteWorkspaces(workspaceName, recure)
 
     # getDataStoreFromWorkspace(workspaceName)
     # getDataStoreFromWorkspace(workspaceName, datastoreName)
-    postDataStoreToWorkspace(workspaceName, datastoreName, shpPath)
+    # postDataStoreToWorkspace(workspaceName, datastoreName, shpPath)
     # deleteDataStoreFromWorkspace(workspaceName, datastoreName, True)
-    putDataStoreInWorkspace(workspaceName, datastoreName, shpPath)
+    # putDataStoreInWorkspace(workspaceName, datastoreName, shpPath)
 
     styleFilePath = 'style_example.xml'
     # getWMS()
     # getStyles()
     # postStyle(styleFilePath)
+
+    # seedLayer()
+    # createGeoWebCacheLayer()
+    getGeoWebCacheLayers()
