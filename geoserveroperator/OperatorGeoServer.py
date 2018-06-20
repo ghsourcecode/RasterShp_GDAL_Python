@@ -8,6 +8,7 @@
 
 import os
 import sys
+import uuid
 import json
 import requests
 
@@ -179,13 +180,13 @@ def seedLayer():
     :return:
     '''
     print('缓存瓦片')
-    # http://localhost:8090/geoserver/gwc/rest/seed/{layer}.{format}, format的取值为json或xml
-    url = 'http://localhost:8090/geoserver/gwc/rest/seed/acme4:testLayerGroup2.json'
+    # 示例： http://localhost:8090/geoserver/gwc/rest/seed/{layer}.{format}, format的取值为json或xml
+    url = 'http://localhost:8090/geoserver/gwc/rest/seed/layerGroupWorkspace:testLayerGroup2.json'
     headers = {'Content-type': 'application/json'}
     data = {
         'seedRequest':{
             'name': 'sedreq',
-            'gridSetId': 'EPSG:4326',
+            'gridSetId': 'My_EPSG:3857',
             'format':'image/jpeg',
             'zoomStart': 0,
             'zoomStop': 5,
@@ -201,10 +202,54 @@ def seedLayer():
     # response = requests.post(url, auth=auth, data=dataxml, headers=headersxml)
     # print('resp code: ' + str(response.status_code))
 
-def createGeoWebCacheLayer():
-    print('创建geowebcache layer')
-    url = 'http://localhost:8090/geoserver/gwc/rest/layers/acme4:testLayerGroup2.json'
+def seedLayer(geoserverUri, auth, wmsLayerName, gridsetId, zoomStart, zoomStop, threadCount):
+    '''
+
+    :param geoserverUri:  http://localhost:8090/geoserver
+    :param gridsetId: 该值必须是发布的wmslayer tilecache 设置的gridsets中的一个，如果不是会报错
+    :param zoomStart: 开始缓存的级别
+    :param zoomStop:
+    :param threadCount:
+    :return:
+    '''
+    url = geoserverUri + '/gwc/rest/seed/' + wmsLayerName + '.json'
     headers = {'Content-type': 'application/json'}
+    data = {
+        'seedRequest': {
+            'name': str(uuid.uuid1()),
+            'gridSetId': gridsetId,
+            'format': 'image/jpeg',
+            'zoomStart': zoomStart,
+            'zoomStop': zoomStop,
+            'type': 'seed', #seedType: 缓存类型，可取值为:seed (add tiles), reseed (replace tiles), or truncate (remove tiles)
+            'threadCount': threadCount
+        }
+    }
+    jsonData = json.dumps(data)
+    response = requests.post(url, auth=auth, data=jsonData, headers=headers)
+    return response.status_code
+
+
+def createGridSet():
+    print('创建gridset，即用于缓存瓦片的分级规则及分辨率')
+    url = geoserverRestUrl[:geoserverRestUrl.rfind('/')] + '/gwc/rest/gridsets/my_epsg:3857'
+    headers = {'Content-type': 'application/xml'}
+    file = open('gridsetTestExample.xml', 'r')
+    data = file.read()
+
+    response = requests.put(url, auth=auth, data=data, headers=headers)
+
+    print('resp code: ' + str(response.status_code))
+
+
+def createGeoWebCacheLayer():
+    '''
+    该暂时不需要，还是是太清楚geoserver 提供geowebcache->layers接口的作用
+    :return:
+    '''
+    print('创建geowebcache layer')
+    url = 'http://localhost:8090/geoserver/gwc/rest/layers/testcreatewebcache:webcache.xml'
+    headers = {'Content-type': 'application/xml'}
     data = {
         "GeoServerLayer":{
             "id": "createcachelayer",
@@ -227,25 +272,35 @@ def createGeoWebCacheLayer():
         }
     }
     jsonData = json.dumps(data)
-    response = requests.put(url, auth=auth, data=jsonData, headers=headers)
+    # response = requests.put(url, auth=auth, data=jsonData, headers=headers)
 
-    xmlData = '<?xml version="1.0" encoding="UTF-8"?>'\
-        '<layer>' \
-              '<id>createlayer</id>' \
-              '<enabled>true</enabled>' \
-              '<inMemoryCached>true</inMemoryCached>' \
-              '<name>createlayer</name>' \
-              '<mimeFormats>image/png</mimeFormats>' \
-              '<gridSubsets><gridSubset>' \
-              '<gridSetName>EPSG:4326</gridSetName>' \
-              '<zoomStart>0</zoomStart>' \
-              '<zoomStop>5</zoomStop>' \
-              '</gridSubset>' \
-              '</gridSubsets>' \
-              '</layer>'
-    # response = requests.put(url, auth=auth, data=xmlData, headers=headers)
+    xmlData = '<Layer>'\
+                  '<id>testcreatewebcache:webcache</id>' \
+                  '<enabled>true</enabled>' \
+                  '<inMemoryCached>true</inMemoryCached>' \
+                  '<name>testcreatewebcache:webcache</name>' \
+                  '<mimeFormats>image/png</mimeFormats>' \
+                  '<gridSubsets>' \
+                    '<gridSubset>' \
+                        '<gridSetName>My_EPSG:3857</gridSetName>' \
+                        '<zoomStart>0</zoomStart>' \
+                        '<zoomStop>5</zoomStop>' \
+                    '</gridSubset>' \
+                  '</gridSubsets>' \
+              '</Layer>'
+    response = requests.put(url, auth=auth, data=xmlData, headers=headers)
 
 
+    print('resp code: ' + str(response.status_code))
+
+def getGeoWebCacheLayer():
+    print('获取已发布的layer')
+    url = 'http://localhost:8090/geoserver/gwc/rest/layers/testcreatewebcache:webcache'
+    headers = {'Accept': 'text/html,application/xhtml+xml,application/xml,*/*;'}
+    response = requests.get(url, auth=auth, headers=headers)
+    file = open('geowebcachelayer_layer.xml', 'wb')
+    file.write(response.content)
+    file.close()
     print('resp code: ' + str(response.status_code))
 
 def getGeoWebCacheLayers():
@@ -260,7 +315,7 @@ def getGeoWebCacheLayers():
 
 if __name__ == '__main__':
     # getWorkspaces()
-    workspaceName = 'acme5'
+    workspaceName = 'acme6'
     datastoreName = 'china_county_5'
     shpPath = 'E:/Data/geowebcachedata/county.shp'
     newShpPath = 'E:/Data/geowebcachedata/jiangxi_river2.shp'
@@ -282,4 +337,7 @@ if __name__ == '__main__':
 
     # seedLayer()
     # createGeoWebCacheLayer()
-    getGeoWebCacheLayers()
+    # getGeoWebCacheLayer()
+    # getGeoWebCacheLayers()
+
+    # createGridSet()
