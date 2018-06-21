@@ -7,13 +7,17 @@
 
 import uuid
 import json
+import time
 import requests
+import threading
 import geoserver.util as geoUtil
 from geoserver.catalog import Catalog, FailedRequestError
 
 class GsConfigOperatorGeoServer:
     def __init__(self, cat):
         self.cat = cat
+        self.geoserverUri = cat.gs_base_url[:cat.gs_base_url.rfind('/')]
+        self.auth = (cat.username, cat.password)
 
     def getWorkspace(self, workspaceName):
         return self.cat.get_workspace(workspaceName)
@@ -77,8 +81,8 @@ class GsConfigOperatorGeoServer:
         # layerGroup.bounds = [str(73.441277), str(135.086930), str(18.159829), str(53.561771), 'EPSG:4326']  # minx, maxx, miny, maxy, crs = box
         self.cat.save(layerGroup)
 
-    def getWMSLayer(self, layerName):
-        return self.cat.get_layer(layerName)
+    def getWMSLayer(self, wmsLayerName):
+        return self.cat.get_layer(wmsLayerName)
 
     def publishShpLayerFromDataStore(self, workspaceName, workspaceUri, datastoreName, layerName, shpPath,
                                      native_crs='EPSG:4326', srs='EPSG:4326'):
@@ -94,9 +98,8 @@ class GsConfigOperatorGeoServer:
         shapefile_plus_sidecars = geoUtil.shapefile_and_friends(shpPath)
         self.cat.add_data_to_store(dataStore, layerName, shapefile_plus_sidecars, workspaceName)
 
-    def seedLayer(self, geoserverUri, auth, wmsLayerName, gridsetId, zoomStart, zoomStop, threadCount):
+    def seedLayer(self, wmsLayerName, gridsetId, zoomStart, zoomStop, threadCount):
         '''
-
         :param geoserverUri:  http://localhost:8090/geoserver
         :param gridsetId: 该值必须是发布的wmslayer tilecache 设置的gridsets中的一个，如果不是会报错
         :param zoomStart: 开始缓存的级别
@@ -104,7 +107,7 @@ class GsConfigOperatorGeoServer:
         :param threadCount:
         :return:
         '''
-        url = geoserverUri + '/gwc/rest/seed/' + wmsLayerName + '.json'
+        url = self.geoserverUri + '/gwc/rest/seed/' + wmsLayerName + '.json'
         headers = {'Content-type': 'application/json'}
         data = {
             'seedRequest': {
@@ -113,11 +116,80 @@ class GsConfigOperatorGeoServer:
                 'format': 'image/jpeg',
                 'zoomStart': zoomStart,
                 'zoomStop': zoomStop,
+                # seedType: 缓存类型，可取值为:seed (add tiles), reseed (replace tiles), or truncate (remove tiles)
                 'type': 'seed',
-                 # seedType: 缓存类型，可取值为:seed (add tiles), reseed (replace tiles), or truncate (remove tiles)
                 'threadCount': threadCount
             }
         }
         jsonData = json.dumps(data)
-        response = requests.post(url, auth=auth, data=jsonData, headers=headers)
+        response = requests.post(url, auth=self.auth, data=jsonData, headers=headers)
+        print('resp_code: ' + str(response.status_code))
         return response.status_code
+
+    def publishWmsLayer(self, workspaceName, workspaceUri, datastoreName, layerName, shpPath,
+                        native_crs='EPSG:4326', srs='EPSG:4326'):
+        '''
+        将shp图发布成wms/wmts服务，并返回wms/wmts url，
+        :param workspaceName:
+        :param workspaceUri:
+        :param datastoreName:
+        :param layerName: 发布之后，图层的名称
+        :param shpPath:
+        :param native_srs: shp图空间参考
+        :param srs: 发布之后的空间参考
+        :return: wms/wmts地址
+        '''
+        layer = self.getWMSLayer(layerName)
+        wmsLayerName = workspaceName + ':' + layerName
+        if layer is not None:
+            print('The \'' + layerName + '\' already exists in geoserver.')
+            return self.geoserverUri + '/' + workspaceName + '/wms', wmsLayerName, \
+                   self.geoserverUri + '/gwc/rest/wmts/' + wmsLayerName + '/default/' + srs + '/' + srs + ':{level}/{row}/{col}?format=image/png'
+        self.publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName,
+                                          layerName, shpPath, native_crs, srs)
+        return self.geoserverUri + '/' + workspaceName + '/wms', wmsLayerName, \
+               self.geoserverUri + '/' + 'gwc/rest/wmts/' + wmsLayerName + '/default/' + srs + '/' + srs + ':{level}/{row}/{col}?format=image/png'
+
+    def setWMSLayerStyle(self, wmsLayer, styleName, sldFilePath=None):
+        if sldFilePath is not None:
+            self.createStyleFromSldFile(styleName, sldFilePath)
+        wmsLayer.default_style = styleName
+        self.cat.save(wmsLayer)
+
+    def seedWMSLayer(self, wmsLayerName, gridsetId, zoomStart, zoomStop, threadCount):
+        '''
+        :param geoserverUri: geoserver地址，例如：http://localhost:8090/geoserver
+        :param auth: 连接geoserver的用户名和密码
+        :param wmsLayerName:要切片的已发布为wms 服务的layer名称
+        :param gridsetId: 指输出瓦片的预定义规则
+        :param zoomStart:开始层级
+        :param zoomStop:结束层级
+        :param threadCount:线程个数
+        :return:
+        '''
+        thread = threading.Thread(group=None, target=self.seedLayer,
+                                  args=(wmsLayerName, gridsetId, zoomStart, zoomStop, threadCount))
+        thread.start()
+
+    def getSeedStatus(self, wmsLayerName):
+        # geoserverUri = 'http://localhost:8090/geoserver'
+        url = self.geoserverUri + '/gwc/rest/seed/' + wmsLayerName + '.json'
+        headers = {'Content-type': 'application/json'}
+        response = requests.get(url, auth=self.auth, headers=headers)
+        rsjson = json.loads(response.text)
+        array = rsjson['long-array-array']
+        isend = False
+        if len(array) < 1:
+            return 'DONE'
+        # subarray: [tiles processed, total number of tiles to process, number of remaining tiles, Task ID, Task status]
+        for subarray in array:
+            status = subarray.pop(-1)  # Task status：-1 = ABORTED, 0 = PENDING, 1 = RUNNING, 2 = DONE
+            if status != 2:
+                isend = False
+                break
+            else:
+                isend = True
+        if isend:
+            return 'DONE'
+        else:
+            return 'RUNNING'

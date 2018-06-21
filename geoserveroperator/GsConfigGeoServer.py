@@ -199,8 +199,8 @@ if __name__ == '__main__':
 
     # publishShpLayerFromDataStore("testcreatewebcache", 'www.decom.cn/testcreatewebcache', 'testcreatedatastore', 'webcache', 'E:/Data/geowebcachedata/publish/county')
 
-    publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName, shpPath)
-    publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName2, shpPath2)
+    # publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName, shpPath)
+    # publishShpLayerFromDataStore(workspaceName, workspaceUri, datastoreName, layerName2, shpPath2)
     # layer1 = cat.get_layer(layerName)
     # layer2 = cat.get_layer(layerName2)
     # layerList = [layer1, layer2]
@@ -234,7 +234,6 @@ if __name__ == '__main__':
     # setLayerStyle(layer, styleName)
 
     # deleteStyle(styleName)
-
 
 
     print('sdsl')

@@ -202,9 +202,21 @@ def seedLayer():
     # response = requests.post(url, auth=auth, data=dataxml, headers=headersxml)
     # print('resp code: ' + str(response.status_code))
 
+def getSeedingStatus():
+    print('获取当前执行的seed的线程状态')
+    url = geoserverRestUrl[:geoserverRestUrl.rfind('/')] + '/gwc/rest/seed.json'
+    headers = {'Content-type': 'application/json'}
+    response = requests.get(url, auth=auth, headers=headers)
+    jsonresult = json.loads(response.text)['long-array-array']
+    for result in jsonresult:
+        status = result.pop(-1)
+        print(status)
+    print('resp_code: ' + str(response.status_code))
+
+
+
 def seedLayer(geoserverUri, auth, wmsLayerName, gridsetId, zoomStart, zoomStop, threadCount):
     '''
-
     :param geoserverUri:  http://localhost:8090/geoserver
     :param gridsetId: 该值必须是发布的wmslayer tilecache 设置的gridsets中的一个，如果不是会报错
     :param zoomStart: 开始缓存的级别
@@ -341,3 +353,5 @@ if __name__ == '__main__':
     # getGeoWebCacheLayers()
 
     # createGridSet()
+
+    getSeedingStatus()
