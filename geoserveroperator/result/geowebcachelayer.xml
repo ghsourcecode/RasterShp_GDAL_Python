@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<layers>
+  <layer>
+    <name>layerGroupWorkspace:river2</name>
+    <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://localhost:8090/geoserver/gwc/rest/layers/layerGroupWorkspace:river2.xml" type="text/xml"/>
+  </layer>
+  <layer>
+    <name>testcreatewebcache:webcache</name>
+    <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://localhost:8090/geoserver/gwc/rest/layers/testcreatewebcache:webcache.xml" type="text/xml"/>
+  </layer>
+  <layer>
+    <name>layerGroupWorkspace:prov_region</name>
+    <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://localhost:8090/geoserver/gwc/rest/layers/layerGroupWorkspace:prov_region.xml" type="text/xml"/>
+  </layer>
+  <layer>
+    <name>layerGroupWorkspace:testLayerGroup2</name>
+    <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://localhost:8090/geoserver/gwc/rest/layers/layerGroupWorkspace:testLayerGroup2.xml" type="text/xml"/>
+  </layer>
+</layers>
