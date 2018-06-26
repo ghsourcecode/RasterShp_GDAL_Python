@@ -107,7 +107,7 @@ def shp2Png():
         pixels.append([px, py])
     c = pngcanvas.PNGCanvas(iwidth, iheight)
     c.polyline(pixels)
-    f = file("hancock_pngcvs.png", "wb")
+    f = open("hancock_pngcvs.png", "wb")
     f.write(c.dump())
     f.close()
 
