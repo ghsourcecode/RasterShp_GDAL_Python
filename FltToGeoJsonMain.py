@@ -10,6 +10,7 @@ import sys
 import numpy
 import ast
 import shutil
+import operator
 try:
     from osgeo import gdal, ogr
 except ImportError:
@@ -28,7 +29,7 @@ classified = [(0, 0, 0.013435),
                 (7, 0.972118, 1.749056),
                 (8, 1.749056, 3.136204),
                 (9, 3.136204, 5.612822)]
-def fltToGeoJson(fltpath, classify, outGeoJsonPath):
+def fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath):
     # 下面路径为中间结果路径，程序运行结束后，删除
     root = sys.path[0]
     tempParent = 'testdata/temp'
@@ -60,7 +61,7 @@ def fltToGeoJson(fltpath, classify, outGeoJsonPath):
     targetFolder = outGeoJsonPath[0 : outGeoJsonPath.rfind('/')]
     if not os.path.exists(targetFolder):
         os.makedirs(targetFolder)
-    shpToGeoJson.exportShpToGeoJson(ogr2ogrPath, tempTifToShpPath, outGeoJsonPath)
+    shpToGeoJson.exportShpToGeoJson(ogr2ogrPath, tempTifToShpPath, outGeoJsonPath, clipShpPath)
     shutil.rmtree(root + '/' + tempParent)
 
 if __name__ == '__main__':
@@ -74,7 +75,8 @@ if __name__ == '__main__':
     fltpath = root + '/testdata/rain_2016.flt'
     classify = classified
     outGeoJsonPath = root + '/testdata/out/shpToJson.json'
-    fltToGeoJson(fltpath, classify, outGeoJsonPath)
+    clipShpPath = 'E:/PycharmProject/gdalpython2/testdata/clipshp/clippolygon.shp'
+    fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath)
 
     # print('argv 0: ' + argvs[0])
     # print('argv 1: ' + argvs[1].split('=')[1])
@@ -86,5 +88,9 @@ if __name__ == '__main__':
     # classifyList = ast.literal_eval(classifyString)
     # classify = numpy.array(classifyList)
     # outGeoJsonPath = argvs[3].split('=')[1]
-    # fltToGeoJson(fltpath, classify, outGeoJsonPath)
+    # clipShpPath = argvs[4].split('=')[1]
+    # if operator.eq(clipShpPath.lower(), 'none'):
+    #     clipShpPath = None
+    # print('clipshppath: ' + str(clipShpPath))
+    # fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath)
 
