@@ -1,2 +1,3 @@
+rem 参数clipShpPath的值为裁切多边形shp图绝对路径，坐标系为epsg:4326，如果不需要裁切，设为none
 python E:\PycharmProject\gdalpython2\FltToGeoJsonMain.py fltPath=E:\PycharmProject\gdalpython2\testdata\rain_2016.flt classify=[(0,0,0.013435),(1,0.013435,0.037422),(2,0.037422,0.080247),(3,0.080247,0.156709),(4,0.156709,0.293223),(5,0.293223,0.536956),(6,0.536956,0.972118),(7,0.972118,1.749056),(8,1.749056,3.136204),(9,3.136204,5.612822)] geojsonPath=E:\PycharmProject\gdalpython2\testdata\out\shptojson.json clipShpPath=E:\PycharmProject\gdalpython2\testdata\clipshp\qinhuangdaocity.shp
 @pause

@@ -71,26 +71,26 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # test instance
-    root = os.getcwd()
-    fltpath = root + '/testdata/rain_2016.flt'
-    classify = classified
-    outGeoJsonPath = root + '/testdata/out/shpToJson.json'
-    clipShpPath = 'E:/PycharmProject/gdalpython2/testdata/clipshp/clippolygon.shp'
-    fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath)
-
-    # print('argv 0: ' + argvs[0])
-    # print('argv 1: ' + argvs[1].split('=')[1])
-    # print('argv 2: ' + argvs[2].split('=')[1])
-    # print('argv 3: ' + argvs[3].split('=')[1])
-    #
-    # fltpath = argvs[1].split('=')[1]
-    # classifyString = argvs[2].split('=')[1]
-    # classifyList = ast.literal_eval(classifyString)
-    # classify = numpy.array(classifyList)
-    # outGeoJsonPath = argvs[3].split('=')[1]
-    # clipShpPath = argvs[4].split('=')[1]
-    # if operator.eq(clipShpPath.lower(), 'none'):
-    #     clipShpPath = None
-    # print('clipshppath: ' + str(clipShpPath))
+    # root = os.getcwd()
+    # fltpath = root + '/testdata/rain_2016.flt'
+    # classify = classified
+    # outGeoJsonPath = root + '/testdata/out/shpToJson.json'
+    # clipShpPath = 'E:/PycharmProject/gdalpython2/testdata/clipshp/clippolygon.shp'
     # fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath)
+
+    print('argv 0: ' + argvs[0])
+    print('argv 1: ' + argvs[1].split('=')[1])
+    print('argv 2: ' + argvs[2].split('=')[1])
+    print('argv 3: ' + argvs[3].split('=')[1])
+
+    fltpath = argvs[1].split('=')[1]
+    classifyString = argvs[2].split('=')[1]
+    classifyList = ast.literal_eval(classifyString)
+    classify = numpy.array(classifyList)
+    outGeoJsonPath = argvs[3].split('=')[1]
+    clipShpPath = argvs[4].split('=')[1]
+    if operator.eq(clipShpPath.lower(), 'none'):
+        clipShpPath = None
+    print('clipshppath: ' + str(clipShpPath))
+    fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath)
 

@@ -7,8 +7,25 @@
 '''
 
 from shapely.geometry import Point
+from shapely.geometry import LineString
+from shapely.geometry import LinearRing
+from shapely.geometry import Polygon
+from shapely.geometry import MultiPoint
+from shapely.geometry import MultiLineString
+from shapely.geometry import MultiPolygon
+from shapely.geometry import asPoint
+from shapely.geometry import asLineString
+from shapely.geometry import asLinearRing
+from shapely.geometry import asPolygon
+from shapely.geometry import asMultiPoint
+from shapely.geometry import asMultiLineString
+from shapely.geometry import asMultiPolygon
+from shapely.geometry import asShape
+from shapely.geometry import shape
 from shapely.wkt import dumps, loads
-from  pprint import pprint
+from pprint import pprint
+import json
+import operator
 
 '''
 shapely geos 拓扑判断接口：
@@ -72,6 +89,34 @@ def wktToGeom():
 def intersection(geomA, geomB):
     return geomA.intersection(geomB)
 
+def geojsonToGeom():
+    print('json/geojson to geometry')
+    geojsonPath = 'E:/PycharmProject/gdalpython2/testdata/out/shptojson.json'
+    geojsonFile = open(geojsonPath, 'r')
+    geojson = geojsonFile.read()
+
+    featuresJson = json.loads(geojson)
+    features = featuresJson['features']
+    for feature in features:
+        geometry = feature['geometry']
+        type = geometry['type'].lower()
+
+        if operator.eq(type, 'multipolygon'):
+            length = len(geometry['coordinates'])
+
+            print('multipolygon coords length: ' + str(length))
+        else:
+            length = len(geometry['coordinates'])
+            polygon1 = shape(geometry)  #shape: Returns a new, independent geometry with coordinates copied from the context.
+            polygon = asShape(geometry) #asShape: Adapts the context to a geometry interface. The coordinates remain stored in the context.
+            if length > 1:
+                print('polygon coords length: ' + str(length))
+
+
+    print('ass')
+
+
+
 
 
 
@@ -86,3 +131,4 @@ if __name__ == '__main__':
     pprint('**: ' + wkt)
     pprint(intersecter)
 
+    geojsonToGeom()
