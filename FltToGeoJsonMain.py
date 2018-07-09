@@ -43,15 +43,20 @@ def fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath):
 
     flttoshp.fltToShp(fltpath, tempFltToTifPath, classify, classifyTifPath, maskTifPath, tempTifToShpPath)
 
+    # 裁切
+    clipReprojectOutPath = tempTifToShpPath[: tempTifToShpPath.rfind('.')] + '_clip.' + tempTifToShpPath[tempTifToShpPath.rfind('.') + 1:]
+    shpToGeoJson.clipShpByOgr2Ogr(ogr2ogrPath, tempTifToShpPath, clipShpPath, clipReprojectOutPath)
+
     # 重投影
     # 复制一份输出的shp图，并删除原来的，对复制后数据进行投影，并输出到新shp图
     reprojectShpPath = tempTifToShpPath[: tempTifToShpPath.rfind('.')] + '_reproject.' + tempTifToShpPath[tempTifToShpPath.rfind('.') + 1:]
     reprojectCalcShpPath = tempTifToShpPath[: tempTifToShpPath.rfind('.')] + '_reproject_calc.' + tempTifToShpPath[tempTifToShpPath.rfind('.') + 1:]
     driver = ogr.GetDriverByName('ESRI Shapefile')
     tempTifToShpDatasource = None # 将打开的shp datastore置空，为了删除
-    reprojectShp.reproject(tempTifToShpPath, 102025, reprojectShpPath) #epsg:102025为Asia_North_Albers_Equal_Area_Conic等面积投影，用于面积计算
+    reprojectShp.reproject(clipReprojectOutPath, 102025, reprojectShpPath) #epsg:102025为Asia_North_Albers_Equal_Area_Conic等面积投影，用于面积计算
     if os.access(tempTifToShpPath, os.F_OK):
         driver.DeleteDataSource(tempTifToShpPath)
+
     # 增加计算面积功能
     flttoshp.calcShpArea(reprojectShpPath, reprojectCalcShpPath)
 
@@ -61,7 +66,7 @@ def fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath):
     targetFolder = outGeoJsonPath[0 : outGeoJsonPath.rfind('/')]
     if not os.path.exists(targetFolder):
         os.makedirs(targetFolder)
-    shpToGeoJson.exportShpToGeoJson(ogr2ogrPath, tempTifToShpPath, outGeoJsonPath, clipShpPath)
+    shpToGeoJson.exportShpToGeoJson(ogr2ogrPath, tempTifToShpPath, outGeoJsonPath, None)
     shutil.rmtree(root + '/' + tempParent)
 
 if __name__ == '__main__':
@@ -71,26 +76,26 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # test instance
-    # root = os.getcwd()
-    # fltpath = root + '/testdata/rain_2016.flt'
-    # classify = classified
-    # outGeoJsonPath = root + '/testdata/out/shpToJson.json'
-    # clipShpPath = 'E:/PycharmProject/gdalpython2/testdata/clipshp/clippolygon.shp'
-    # fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath)
-
-    print('argv 0: ' + argvs[0])
-    print('argv 1: ' + argvs[1].split('=')[1])
-    print('argv 2: ' + argvs[2].split('=')[1])
-    print('argv 3: ' + argvs[3].split('=')[1])
-
-    fltpath = argvs[1].split('=')[1]
-    classifyString = argvs[2].split('=')[1]
-    classifyList = ast.literal_eval(classifyString)
-    classify = numpy.array(classifyList)
-    outGeoJsonPath = argvs[3].split('=')[1]
-    clipShpPath = argvs[4].split('=')[1]
-    if operator.eq(clipShpPath.lower(), 'none'):
-        clipShpPath = None
-    print('clipshppath: ' + str(clipShpPath))
+    root = os.getcwd()
+    fltpath = root + '/testdata/rain_2016.flt'
+    classify = classified
+    outGeoJsonPath = root + '/testdata/out/shpToJson.json'
+    clipShpPath = 'E:/PycharmProject/gdalpython2/testdata/clipshp/cliptemp.shp'
     fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath)
+
+    # print('argv 0: ' + argvs[0])
+    # print('argv 1: ' + argvs[1].split('=')[1])
+    # print('argv 2: ' + argvs[2].split('=')[1])
+    # print('argv 3: ' + argvs[3].split('=')[1])
+    #
+    # fltpath = argvs[1].split('=')[1]
+    # classifyString = argvs[2].split('=')[1]
+    # classifyList = ast.literal_eval(classifyString)
+    # classify = numpy.array(classifyList)
+    # outGeoJsonPath = argvs[3].split('=')[1]
+    # clipShpPath = argvs[4].split('=')[1]
+    # if operator.eq(clipShpPath.lower(), 'none'):
+    #     clipShpPath = None
+    # print('clipshppath: ' + str(clipShpPath))
+    # fltToGeoJson(fltpath, classify, outGeoJsonPath, clipShpPath)
 

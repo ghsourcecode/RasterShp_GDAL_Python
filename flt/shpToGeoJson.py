@@ -45,7 +45,19 @@ def exportShpToGeoJson(ogr2ogrPath, sourceShpPath, outGeoJsonPath, clipShpPath=N
     else:
         os.system('python' + ' ' + ogr2ogrPath + ' -f "GeoJSON" ' + outGeoJsonPath + ' ' + sourceShpPath)
 
+def clipShpByOgr2Ogr(ogr2ogrPath, sourceShpPath, clipShpPath, outShpPath):
+    '''用clipshp 裁切 sourceshp， 用绝对路径'''
+    if clipShpPath is not None:
+        os.system('python' + ' ' + ogr2ogrPath + ' -f "ESRI Shapefile" ' + outShpPath + ' ' + sourceShpPath + ' -clipsrc ' + clipShpPath)
+    else:
+        os.system('python' + ' ' + ogr2ogrPath + ' -f "ESRI Shapefile" ' + outShpPath + ' ' + sourceShpPath)
+
 if __name__ == '__main__':
     shpPath = r'E:\PycharmProject\gdalpython2\testdata\flttoshp.shp'
     outGeoJsonPath = r'E:\PycharmProject\gdalpython2\testdata\out\shpToGeoJson.json'
-    exportShpToGeoJson(shpPath, outGeoJsonPath)
+    # exportShpToGeoJson(shpPath, outGeoJsonPath)
+
+    ogr2ogrPath = r'E:\PycharmProject\gdalpython2\gdal223\ogr2ogr.py'
+    clippath = r'E:\PycharmProject\gdalpython2\testdata\clipshp\cliptemp.shp'
+    outshppath = r'E:\PycharmProject\gdalpython2\testdata\fltshpclip.shp'
+    clipShpByOgr2Ogr(ogr2ogrPath, shpPath, clippath, outshppath)
