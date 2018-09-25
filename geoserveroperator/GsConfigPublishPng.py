@@ -7,21 +7,18 @@
 @date: 2018/9/13 13:52
 '''
 import os
+import sys
 import cv2
 import numpy
+import shutil
 from osgeo import gdal
 from osgeo import osr
 from geoserver.catalog import Catalog, FailedRequestError
-cat = Catalog("http://localhost:8081/geoserver/rest", username="admin", password="geoserver")
+# cat = Catalog("http://localhost:8081/geoserver/rest", username="admin", password="geoserver")
 
-
+global cat
 '''tiff的wgs84坐标范围'''
 tiffBound = [104.394262, 112.099669, 20.833333, 26.599407];
-def createPngWorkspace():
-    print('初始化')
-
-def createPngDataStore():
-    print("skdf")
 
 def createPngWmsLayer():
     print("publish png wms layer")
@@ -122,23 +119,20 @@ def writeTiff(im_data, im_width, im_height, im_bands, im_geotrans, im_proj, path
     dataset.FlushCache()
     del dataset
 
-def publishGeoTiff(geotiffPath, overwrite=False):
+def publishGeoTiff(geotiffPath, workspaceName, datastoreName, overwrite=False):
     print("发面geotiff wms服务")
-    tiffWorkspaceName = "geotiffWorkspace"
-    tiffDatastoreName = "geotiffDatastore"
-    tiffWorkspace = cat.get_workspace(tiffWorkspaceName)
+    tiffWorkspace = cat.get_workspace(workspaceName)
     if not tiffWorkspace:
-        tiffWorkspace = cat.create_workspace(tiffWorkspaceName, "http://localhost:8081/workspace/geotiffWorkspace")
+        tiffWorkspace = cat.create_workspace(workspaceName, "http://localhost:8081/workspace/" + workspaceName)
     # tiffDatastore = cat.get_store(tiffDatastoreName, tiffWorkspace)
     # if not tiffDatastore:
     #     tiffDatastore = cat.create_coveragestore(tiffDatastoreName, geotiffPath, tiffWorkspace, overwrite)
-    tiffDatastore = cat.create_coveragestore(tiffDatastoreName, geotiffPath, tiffWorkspace, overwrite)
+    tiffDatastore = cat.create_coveragestore(datastoreName, geotiffPath, tiffWorkspace, overwrite)
 
-    print("publish geotiff success")
 
 if __name__ == "__main__":
     print("publish png wmslayer main")
-
+    cat = Catalog("http://localhost:8081/geoserver", username="admin", password="geoserver")
     '''测试opencv是否安装成功'''
     # img = cv2.imread("../testdata/pngToTiff/pngtotiff.png")
     # cv2.namedWindow("image window")
@@ -146,8 +140,30 @@ if __name__ == "__main__":
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
     currentDir = os.getcwd();
+    print(os.path.abspath(os.path.dirname(currentDir) + os.path.sep + ".") )
     pngPath = "../testdata/pngToTiff/pngtotiff.png"
-    outTiffPath = "../testdata/pngToTiff/out12.tif"
-    # convertPngToTiff(pngPath, outTiffPath)
-    tiffPath = "../testdata/pngToTiff/out11.tif"
-    publishGeoTiff(tiffPath, True)
+    outTiffPath = currentDir + "/tmp"
+    if not os.path.exists(outTiffPath):
+        os.makedirs(outTiffPath)
+    outTiffPath += "/out12.tif"
+    convertPngToTiff(pngPath, outTiffPath)
+    workspaceName = "geotiffWorkspace"
+    datastoreName = "geotiffDatastore"
+    publishGeoTiff(outTiffPath, workspaceName, datastoreName, True)
+    shutil.rmtree(outTiffPath)
+
+    '''cmd调用时走该代码'''
+    geoserverUri = sys.argv[1].split('=')[1]
+    username = sys.argv[2].split('=')[1]
+    password = sys.argv[3].split('=')[1]
+    cat = Catalog(geoserverUri, username=username, password=password)
+    pngPath = sys.argv[4].split('=')[1]
+    outTiffPath = os.path.abspath(os.path.dirname(pngPath) + os.path.sep + ".") + "/tmp"
+    if not os.path.exists(outTiffPath):
+        os.makedirs(outTiffPath)
+    outTiffPath += "/tempCovert.tif"
+    convertPngToTiff(pngPath, outTiffPath)
+    workspaceName = sys.argv[5].split('=')[1]
+    datastoreName = sys.argv[6].split('=')[1]
+    publishGeoTiff(outTiffPath, workspaceName, datastoreName, True)
+    shutil.rmtree(outTiffPath)
