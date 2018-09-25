@@ -19,7 +19,8 @@ def polygonize(tifPath, maskPath, outShpPath):
     if tifPath is None or outShpPath is None:
         Usage()
     format = 'ESRI Shapefile'   #该类型需要查找gdal可输出的矢量类型api
-    options = ['8CONNECTED=8']
+    # options = ['8CONNECTED=8']
+    options = []
     quiet_flag = 0
     src_filename = tifPath
     src_band_n = 1
