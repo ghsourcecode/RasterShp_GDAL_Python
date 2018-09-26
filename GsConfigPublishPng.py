@@ -18,7 +18,7 @@ from geoserver.catalog import Catalog, FailedRequestError
 
 global cat
 '''tiff的wgs84坐标范围'''
-tiffBound = [104.394262, 112.099669, 20.833333, 26.599407];
+global tiffBound;
 
 def createPngWmsLayer():
     print("publish png wms layer")
@@ -151,43 +151,60 @@ if __name__ == "__main__":
     # cv2.destroyAllWindows()
 
     # deleteWorkspace("geotiffWorkspace")
-    currentDir = os.getcwd();
-    print(os.path.abspath(os.path.dirname(currentDir) + os.path.sep + "."))
-    overwrite = True if (str(True).lower() == "true") else False
-    pngPath = "../testdata/pngToTiff/pngtotiff.png"
-    pngPath = "E:/临时工作/geoserver+python/release_v1.1/geoserver_python_release/data/pngtotif/pngtotiff.png"
-    outTiffPath = currentDir + "/tmp"
-    if not os.path.exists(outTiffPath):
-        os.makedirs(outTiffPath)
-    outTiffPath += "/out12.tif"
-    convertPngToTiff(pngPath, outTiffPath)
-    workspaceName = "geotiffWorkspace"
-    datastoreName = "geotiffDatastore"
-    wmsUrl, wmsLayerName = publishGeoTiff(outTiffPath, workspaceName, datastoreName, True)
-    outURLPath = "../testdata/pngToTiff/out.txt"
-    outFile = open(r"E:\PycharmProject\gdalpython2\testdata\pngToTiff\out.txt", mode="w")
-    outFile.write("wmsUrl=" + wmsUrl + "\n")
-    outFile.write("wmsLayerName=" + wmsLayerName)
-    shutil.rmtree(os.path.abspath(os.path.dirname(outTiffPath) + os.path.sep + "."))
-
-    '''cmd调用时走该代码'''
-    # geoserverUri = sys.argv[1].split('=')[1]
-    # username = sys.argv[2].split('=')[1]
-    # password = sys.argv[3].split('=')[1]
-    # cat = Catalog(geoserverUri + "/rest", username=username, password=password)
-    # pngPath = sys.argv[4].split('=')[1]
-    # outTiffPathParent = os.path.abspath(os.path.dirname(pngPath) + os.path.sep + ".") + "/tmp"
-    # if not os.path.exists(outTiffPathParent):
-    #     os.makedirs(outTiffPathParent)
-    # outTiffPath = outTiffPathParent + "/tempCovert.tif"
+    # currentDir = os.getcwd();
+    # print(os.path.abspath(os.path.dirname(currentDir) + os.path.sep + "."))
+    # overwrite = True if (str(True).lower() == "true") else False
+    # pngPath = "../testdata/pngToTiff/pngtotiff.png"
+    # pngPath = "E:/临时工作/geoserver+python/release_v1.1/geoserver_python_release/data/pngtotif/pngtotiff.png"
+    # outTiffPath = currentDir + "/tmp"
+    # if not os.path.exists(outTiffPath):
+    #     os.makedirs(outTiffPath)
+    # outTiffPath += "/out12.tif"
     # convertPngToTiff(pngPath, outTiffPath)
-    # workspaceName = sys.argv[5].split('=')[1]
-    # datastoreName = sys.argv[6].split('=')[1]
-    # overwrite = sys.argv[7].split('=')[1]
-    # overwrite = True if (str(True).lower() == overwrite) else False
-    # wmsUrl, wmsLayerName = publishGeoTiff(outTiffPath, workspaceName, datastoreName, overwrite)
-    # outURLPath = sys.argv[7].split( '=')[1]
-    # outFile = open(outURLPath, mode="w")
+    # workspaceName = "geotiffWorkspace"
+    # datastoreName = "geotiffDatastore"
+    # wmsUrl, wmsLayerName = publishGeoTiff(outTiffPath, workspaceName, datastoreName, True)
+    # outURLPath = "../testdata/pngToTiff/out.txt"
+    # outFile = open(r"E:\PycharmProject\gdalpython2\testdata\pngToTiff\out.txt", mode="w")
     # outFile.write("wmsUrl=" + wmsUrl + "\n")
     # outFile.write("wmsLayerName=" + wmsLayerName)
-    # shutil.rmtree(outTiffPathParent)
+    # shutil.rmtree(os.path.abspath(os.path.dirname(outTiffPath) + os.path.sep + "."))
+
+    '''cmd调用时走该代码'''
+    geoserverUri = sys.argv[1].split('=')[1]
+    username = sys.argv[2].split('=')[1]
+    password = sys.argv[3].split('=')[1]
+    cat = Catalog(geoserverUri + "/rest", username=username, password=password)
+    pngPath = sys.argv[4].split('=')[1]
+    # 经纬度范围
+    # tiffBound = [104.394262, 112.099669, 20.833333, 26.599407];
+    extent = sys.argv[5].split('=')[1]
+    length = len(extent)
+    extent = extent[1 : length - 1]
+    extentArr = extent.split(",")
+    if not len(extentArr) == 4:
+        print("经纬度范围设置有误")
+    minx =float(extentArr[0].strip())
+    maxx =float(extentArr[1].strip())
+    miny =float(extentArr[2].strip())
+    maxy =float(extentArr[3].strip())
+    tiffBound = [minx, maxx, miny, maxy]
+
+    outTiffPathParent = os.path.abspath(os.path.dirname(pngPath) + os.path.sep + ".") + "/tmp"
+    if not os.path.exists(outTiffPathParent):
+        os.makedirs(outTiffPathParent)
+    outTiffPath = outTiffPathParent + "/tempCovert.tif"
+    convertPngToTiff(pngPath, outTiffPath)
+    workspaceName = sys.argv[6].split('=')[1]
+    datastoreName = sys.argv[7].split('=')[1]
+    overwrite = sys.argv[8].split('=')[1]
+    overwrite = True if (str(True).lower() == overwrite) else False
+    wmsUrl, wmsLayerName = publishGeoTiff(outTiffPath, workspaceName, datastoreName, overwrite)
+    outURLPath = sys.argv[9].split('=')[1]
+    outURLPathParent = os.path.dirname(outURLPath) + os.path.sep + "."
+    if not os.path.exists(outURLPathParent):
+        os.makedirs(outURLPathParent)
+    outFile = open(outURLPath, mode="w")
+    outFile.write("wmsUrl=" + wmsUrl + "\n")
+    outFile.write("wmsLayerName=" + wmsLayerName)
+    shutil.rmtree(outTiffPathParent)
